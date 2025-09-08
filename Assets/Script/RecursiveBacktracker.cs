@@ -103,18 +103,18 @@ public class RecursiveBacktracker
 
         Directions = Randomize(Directions);
 
-        foreach (Direction dir in Directions) //check each direction
+        foreach (Direction dir in Directions) 
         {
-            int nx = cx + DirToDirectionX(dir);//translate current coordinate to drections coordinate
+            int nx = cx + DirToDirectionX(dir);
             int ny = cy + DirToDirectionY(dir);
 
-            if ((0 <= ny && ny <= GridHeight - 1) && (0 <= nx && nx <= GridWidth - 1)) //if new coordinate between the bounds
+            if ((0 <= ny && ny <= GridHeight - 1) && (0 <= nx && nx <= GridWidth - 1))
             {
                 if (Grid[ny][nx] == 0)
-                { //If the new coordinate unvisited
-                    Grid[cy][cx] |= (int)dir; //current direction added to current cell bitwise
-                    Grid[ny][nx] |= DirToOpposite(dir);//opposite of current direction added to next cell bitwise
-                    CarvePassagesFrom(nx, ny, Grid);//Carving the map continued from the next cell 
+                { 
+                    Grid[cy][cx] |= (int)dir;
+                    Grid[ny][nx] |= DirToOpposite(dir);
+                    CarvePassagesFrom(nx, ny, Grid);
                 }
             }
         }
@@ -122,15 +122,15 @@ public class RecursiveBacktracker
 
     void FillMazeValues()
     {
-        string AsciiMapRepresentation = ""; //These are used to show the map as ascii representation and bit values of cells
+        string AsciiMapRepresentation = "";
         string BitwiseMapRepresentation = "";
 
-        for (int t = 0; t < GridHeight; t++) //leftest border values 
+        for (int t = 0; t < GridHeight; t++)
         {
             CellGrid[t][0].Borders.Add(Direction.Left);
 
         }
-        for (int t = 0; t < GridWidth; t++)//uppest border values 
+        for (int t = 0; t < GridWidth; t++)
         {
             CellGrid[0][t].Borders.Add(Direction.Up);
 

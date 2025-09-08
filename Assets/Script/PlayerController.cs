@@ -38,7 +38,6 @@ public class PlayerController : MonoBehaviour
     }
     void Update()
     {
-        // chỉ xử lý input và pathfinding cho player của mình
         if (photonView.IsMine)
         {
             if (Input.GetMouseButtonDown(0))
@@ -63,8 +62,6 @@ public class PlayerController : MonoBehaviour
                 }
             }
         }
-
-        // di chuyển (chỉ đối với player local, còn remote đã sync transform qua PhotonTransformView)
         if (photonView.IsMine && path != null && currentIndex < path.Count)
         {
             Vector3 targetPos = path[currentIndex];

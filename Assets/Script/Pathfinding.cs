@@ -36,7 +36,6 @@ public class Pathfinding
                 }
             }
         }
-        // reconstruct path
         List<Vector3> path = new List<Vector3>();
         if (!cameFrom.ContainsKey(target)) return path;
 

@@ -21,43 +21,43 @@ public class ObjectPoints : MonoBehaviour
         CalculateObjectVertices();
     }
 
-    public List<Vector3> GetCornerPoints() //corner points calculated and returned to outer objects
+    public List<Vector3> GetCornerPoints()
     {
         CalculateCornerPoints();
         return CornerPoints;
     }
 
-    public List<Vector3> GetObjectGlobalVertices() //global vertices calculated and returned to outer objects
+    public List<Vector3> GetObjectGlobalVertices()
     {
         CalculateObjectVertices();
         return ObjectVertices;
     }
 
-    public List<Vector3> GetObjectLocalVertices()  //local vertices calculated and returned to outer objects
+    public List<Vector3> GetObjectLocalVertices()
     {
         CalculateObjectVertices();
         return ObjectLocalVertices;
     }
 
-    public List<Vector3> GetObjectUniqueVertices() //unique global vertices calculated and returned to outer objects
+    public List<Vector3> GetObjectUniqueVertices()
     {
         CalculateObjectVertices();
         return ObjectUniqueVertices;
     }
 
-    public Vector3 GetRandomPoint() //random point calculated and returned to outer objects
+    public Vector3 GetRandomPoint() 
     {
         CalculateRandomPoint();
         return RandomPoint;
     }
 
-    private void CalculateObjectVertices() //local, global and unique global vertices calculated for the object
+    private void CalculateObjectVertices() 
     {
         ObjectLocalVertices.Clear();
         ObjectVertices.Clear();
         ObjectUniqueVertices.Clear();
-        ObjectLocalVertices = new List<Vector3>(GetComponent<MeshFilter>().sharedMesh.vertices); //get vertice points with local coordinates from the mesh of the object
-        foreach (Vector3 point in ObjectLocalVertices) //all the points are transformed into global points
+        ObjectLocalVertices = new List<Vector3>(GetComponent<MeshFilter>().sharedMesh.vertices);
+        foreach (Vector3 point in ObjectLocalVertices)
         {
             ObjectVertices.Add(transform.TransformPoint(point));
         }
@@ -68,23 +68,21 @@ public class ObjectPoints : MonoBehaviour
     {
         CalculateCornerPoints();
         EdgeVectors.Clear();
-        //It is up to child to fill the vectors
     }
 
     protected virtual void CalculateEdgeVectors(int VectorCornerIdx, int vectorfaceidx)
     {
         CalculateCornerPoints();
         EdgeVectors.Clear();
-        //It is up to child to fill the vectors
     }
 
-    protected virtual void CalculateRandomPoint() { } //It is up to child how to calcullate random point
+    protected virtual void CalculateRandomPoint() { }
 
     protected virtual void CalculateCornerPoints()
     {
         CalculateObjectVertices();
-        CornerPoints.Clear(); //in case of transform changes corner points are reset
-        //It is up to child to how to calculate corner points
+        CornerPoints.Clear();
+        
     }
 
 }
