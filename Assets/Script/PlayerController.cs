@@ -1,53 +1,71 @@
-﻿using System;
+﻿using Photon.Pun;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
 
 [RequireComponent(typeof(LineRenderer))]
+[RequireComponent(typeof(PhotonView))]
 public class PlayerController : MonoBehaviour
 {
     [SerializeField] private Animator m_Animator;
     [SerializeField] private float moveSpeed = 3f;
     [SerializeField] private float rotationSpeed = 720f;
+    [SerializeField] private PhotonView photonView;
+    [SerializeField] private SkinnedMeshRenderer m_SickMan;
+    private Material[] lineMaterials;
     private LineRenderer lineRenderer;
     private List<Vector3> path;
     private int currentIndex;
     private bool currentState = false;
     void Start()
     {
+        lineMaterials = Resources.LoadAll<Material>("LineMaterials");
+        Debug.Log("count Materia;: " + lineMaterials.Length);
         lineRenderer = GetComponent<LineRenderer>();
         lineRenderer.startWidth = 0.1f;
         lineRenderer.endWidth = 0.1f;
-        lineRenderer.startColor = new Color(0f, 1f, 0.8f);  // xanh ngọc nhạt
-        lineRenderer.endColor = new Color(0f, 0.6f, 1f);  // xanh biển
-        ChangeAnimationState(false);
+        if (lineMaterials != null && lineMaterials.Length > 0)
+        {
+            lineRenderer.material = m_SickMan.material = lineMaterials[UnityEngine.Random.Range(0, lineMaterials.Length)];
+        }
+        Color startCol = UnityEngine.Random.ColorHSV(0f, 1f, 0.7f, 1f, 0.7f, 1f);
+        Color endCol = UnityEngine.Random.ColorHSV(0f, 1f, 0.7f, 1f, 0.7f, 1f);
+        lineRenderer.startColor = startCol;
+        lineRenderer.endColor = endCol;
         path = new List<Vector3>();
     }
     void Update()
     {
-        if (Input.GetMouseButtonDown(0))
+        // chỉ xử lý input và pathfinding cho player của mình
+        if (photonView.IsMine)
         {
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            if (Physics.Raycast(ray, out RaycastHit hit))
+            if (Input.GetMouseButtonDown(0))
             {
-                MazeCell mazeCell = hit.collider.GetComponent<MazeCell>();
-                if (mazeCell != null)
+                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                if (Physics.Raycast(ray, out RaycastHit hit))
                 {
-                    Vector2Int start = WorldToMaze(transform.position);
-                    Vector2Int target = mazeCell.CellPos;
-                    Pathfinding pf = new Pathfinding(MazeGenerator.Instance.CellGrid);
-                    path = pf.FindPath(start, target);
+                    MazeCell mazeCell = hit.collider.GetComponent<MazeCell>();
+                    if (mazeCell != null)
+                    {
+                        Vector2Int start = WorldToMaze(transform.position);
+                        Vector2Int target = mazeCell.CellPos;
+                        Pathfinding pf = new Pathfinding(MazeGenerator.Instance.CellGrid);
+                        path = pf.FindPath(start, target);
 
-                    if (path.Count > 0)
-                        path.Insert(0, transform.position);
+                        if (path.Count > 0)
+                            path.Insert(0, transform.position);
 
-                    DrawPath(path);
-                    currentIndex = 1;
+                        DrawPath(path);
+                        currentIndex = 1;
+                    }
                 }
             }
         }
-        if (path != null && currentIndex < path.Count)
+
+        // di chuyển (chỉ đối với player local, còn remote đã sync transform qua PhotonTransformView)
+        if (photonView.IsMine && path != null && currentIndex < path.Count)
         {
             Vector3 targetPos = path[currentIndex];
             targetPos.y = transform.position.y;
@@ -62,13 +80,10 @@ public class PlayerController : MonoBehaviour
             if (Vector3.Distance(transform.position, targetPos) < 0.05f)
                 currentIndex++;
         }
-        else
+        else if (photonView.IsMine && path != null && currentIndex >= path.Count)
         {
-            if (path != null && currentIndex >= path.Count)
-            {
-                ChangeAnimationState(false);
-                path = null;
-            }
+            ChangeAnimationState(false);
+            path = null;
         }
     }
 

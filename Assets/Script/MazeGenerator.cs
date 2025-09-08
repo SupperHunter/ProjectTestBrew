@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using Photon.Pun;
+using System.Collections;
 using System.Collections.Generic;
 using Unity.AI.Navigation;
 using UnityEngine;
@@ -10,6 +11,7 @@ public class MazeGenerator : Singleton<MazeGenerator>
     [SerializeField] private GameObject BorderParent;
     [SerializeField] private GameObject MazeCellPrefab;
     [SerializeField] private Transform CellParent;
+    [SerializeField] private Material m_simpleLit;
     public List<List<Vector3>> Grid;
     public List<List<Cell>> CellGrid;
     public int MazeWidth = 11;
@@ -23,7 +25,6 @@ public class MazeGenerator : Singleton<MazeGenerator>
     {
         PointsOnThePlane = this.GetComponent<ObjectPoints>();
         RB = new RecursiveBacktracker();
-        CreateNewMaze();
     }
 
     public void CreateNewMaze()
@@ -37,7 +38,7 @@ public class MazeGenerator : Singleton<MazeGenerator>
         ShowMaze();
     }
 
-    void CreateTheGrid()  //creates grid with given width and length from the points on the plane
+    void CreateTheGrid() 
     {
         Grid = new List<List<Vector3>>();
         List<Vector3> OneRow = new List<Vector3>();
@@ -53,13 +54,75 @@ public class MazeGenerator : Singleton<MazeGenerator>
         }
     }
 
-    void ShowMaze()  //Creates maz with borders as cubes
+    [PunRPC]
+    void RPC_CreateCell(int x, int y, Vector3 pos, byte[] borderBytes)
+    {
+        Direction[] borders = new Direction[borderBytes.Length];
+        for (int i = 0; i < borderBytes.Length; i++)
+            borders[i] = (Direction)borderBytes[i];
+        GameObject cellObj = Instantiate(MazeCellPrefab, pos, Quaternion.identity, CellParent);
+        cellObj.name = $"Cell_{x}_{y}";
+
+        MazeCell mazeCell = cellObj.GetComponent<MazeCell>();
+        mazeCell.Init(
+            new Vector2Int(x, y),
+            new Cell(pos: pos, borders: new List<Direction>(borders))
+        );
+        foreach (Direction d in borders)
+        {
+            if (d == Direction.Up || d == Direction.Down)
+                PlaceHorizontalBorderSimple(pos, x, y, d);
+            else
+                PlaceVerticalBorderSimple(pos, x, y, d);
+        }
+    }
+    public void SyncMazeWithOthers()
+    {
+        PhotonView pv = this.GetComponent<PhotonView>();
+
+        for (int y = 0; y < MazeHeight; y++)
+        {
+            for (int x = 0; x < MazeWidth; x++)
+            {
+                Direction[] borders = CellGrid[y][x].Borders.ToArray();
+                byte[] borderBytes = new byte[borders.Length];
+
+                for (int i = 0; i < borders.Length; i++)
+                    borderBytes[i] = (byte)borders[i];
+                pv.RPC("RPC_CreateCell", RpcTarget.OthersBuffered, x, y, CellGrid[y][x].position, borderBytes);
+            }
+        }
+    }
+    void PlaceHorizontalBorderSimple(Vector3 pos, int x, int y, Direction d)
+    {
+        GameObject border = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        border.transform.localScale = new Vector3(0.3f, 1, 1.3f);
+        border.GetComponent<MeshRenderer>().material = m_simpleLit;
+        Vector3 offset = Vector3.right * 0.5f * ((d == Direction.Up) ? 1 : -1);
+        Instantiate(border, pos + offset, Quaternion.identity, BorderParent.transform)
+            .name = $"Border_H_{x}_{y}_{d}";
+    }
+
+    void PlaceVerticalBorderSimple(Vector3 pos, int x, int y, Direction d)
+    {
+        GameObject border = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        border.transform.localScale = new Vector3(1.3f, 1, 0.3f);
+        border.GetComponent<MeshRenderer>().material = m_simpleLit;
+        Vector3 offset = Vector3.forward * 0.5f * ((d == Direction.Left) ? 1 : -1);
+        Instantiate(border, pos + offset, Quaternion.identity, BorderParent.transform)
+            .name = $"Border_V_{x}_{y}_{d}";
+    }
+
+    void ShowMaze()
     {
         GameObject VerticalBorder = GameObject.CreatePrimitive(PrimitiveType.Cube);  //vertically scaled cube for up and down borders
         VerticalBorder.transform.localScale = new Vector3(1.3f, 1, 0.3f);
 
         GameObject HorizontalBorder = GameObject.CreatePrimitive(PrimitiveType.Cube);//horizontally scaled cube for left and right borders
         HorizontalBorder.transform.localScale = new Vector3(0.3f, 1, 1.3f);
+
+        VerticalBorder.GetComponent<MeshRenderer>().material = m_simpleLit;
+        HorizontalBorder.GetComponent<MeshRenderer>().material = m_simpleLit;
         for (int x = 0; x < MazeWidth; x++)
         {
             for (int y = 0; y < MazeHeight; y++)

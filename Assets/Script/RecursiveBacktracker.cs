@@ -13,6 +13,12 @@ public class Cell
         position = pos;
         Borders = new List<Direction>();
     }
+
+    public Cell(Vector3 pos, List<Direction> borders)
+    {
+        position = pos;
+        Borders = borders;
+    }
 }
 
 public enum Direction //direction's bitwise value
@@ -71,7 +77,7 @@ public class RecursiveBacktracker
         GridHeight = Maze.Count();
     }
 
-    void CreateGrid(List<List<Vector3>> Maze)  //CellGrid and Grid variables are initially created
+    void CreateGrid(List<List<Vector3>> Maze)
     {
         Grid = new List<List<int>>();
         CellGrid = new List<List<Cell>>();
@@ -141,11 +147,11 @@ public class RecursiveBacktracker
                 BitwiseMapRepresentation += "(" + Grid[y][x] + ")";
                 AsciiMapRepresentation += (((Grid[y][x] & (int)Direction.Down) != 0) ? " " : "_");
 
-                if ((Grid[y][x] & (int)Direction.Down) == 0) //there is a wall in the downside of the map
+                if ((Grid[y][x] & (int)Direction.Down) == 0)
                 {
                     CellGrid[y][x].Borders.Add(Direction.Down);
                 }
-                if ((Grid[y][x] & (int)Direction.Right) == 0)//There is a wall in the rightside of the cell
+                if ((Grid[y][x] & (int)Direction.Right) == 0)
                 {
                     CellGrid[y][x].Borders.Add(Direction.Right);
                     AsciiMapRepresentation += "|";
@@ -153,10 +159,10 @@ public class RecursiveBacktracker
             }
         }
 
-        Debug.Log(AsciiMapRepresentation);  //Mapps are printed to console
+        Debug.Log(AsciiMapRepresentation); 
         Debug.Log(BitwiseMapRepresentation);
     }
-    int DirToDirectionX(Direction dir)//returns direction's x axis movement value
+    int DirToDirectionX(Direction dir)
     {
 
         switch (dir)
@@ -172,7 +178,7 @@ public class RecursiveBacktracker
         }
         return 0;
     }
-    int DirToDirectionY(Direction dir) //returns direction's y axis movement value
+    int DirToDirectionY(Direction dir)
     {
         switch (dir)
         {
@@ -187,7 +193,7 @@ public class RecursiveBacktracker
         }
         return 0;
     }
-    int DirToOpposite(Direction dir) //returns direction's opposite direction value
+    int DirToOpposite(Direction dir)
     {
         switch (dir)
         {
