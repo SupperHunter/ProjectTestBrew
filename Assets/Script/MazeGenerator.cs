@@ -4,15 +4,17 @@ using Unity.AI.Navigation;
 using UnityEngine;
 using UnityEngine.AI;
 
-public class MazeGenerator : MonoBehaviour
+public class MazeGenerator : Singleton<MazeGenerator>
 {
 
     [SerializeField] private GameObject BorderParent;
+    [SerializeField] private GameObject MazeCellPrefab;
+    [SerializeField] private Transform CellParent;
     public List<List<Vector3>> Grid;
     public List<List<Cell>> CellGrid;
+    public int MazeWidth = 11;
+    public int MazeHeight = 11;
     private ObjectPoints PointsOnThePlane;
-    private int MazeWidth = 11;
-    private int MazeHeight = 11;
     private readonly int planeHeight = 11;
     private readonly int planeWidth = 11;
     private RecursiveBacktracker RB;
@@ -58,13 +60,15 @@ public class MazeGenerator : MonoBehaviour
 
         GameObject HorizontalBorder = GameObject.CreatePrimitive(PrimitiveType.Cube);//horizontally scaled cube for left and right borders
         HorizontalBorder.transform.localScale = new Vector3(0.3f, 1, 1.3f);
-        int counttt = 0;
-
         for (int x = 0; x < MazeWidth; x++)
         {
             for (int y = 0; y < MazeHeight; y++)
             {
-                counttt++;
+                GameObject cellObj = Instantiate(MazeCellPrefab, CellGrid[y][x].position, Quaternion.identity, CellParent);
+                cellObj.SetActive(true);
+                cellObj.name = $"Cell_{x}_{y}";
+                MazeCell mazeCell = cellObj.GetComponent<MazeCell>();
+                mazeCell.Init(new Vector2Int(x, y), CellGrid[y][x]);
                 if ((x == 0 && y == 0) || (x == MazeWidth - 1 && y == MazeWidth - 1)) continue;
                 if (CellGrid[y][x].Borders.Contains(Direction.Up))
                 {

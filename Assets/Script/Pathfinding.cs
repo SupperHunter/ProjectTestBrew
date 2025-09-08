@@ -6,79 +6,75 @@ using UnityEngine;
 public class Pathfinding
 {
     private List<List<Cell>> maze;
-    public Pathfinding(List<List<Cell>> cellGrid)
+
+    public Pathfinding(List<List<Cell>> mazeGrid)
     {
-        maze = cellGrid;
+        maze = mazeGrid;
     }
 
-    public List<Cell> FindFath(Vector2Int start, Vector2Int end)
+    public List<Vector3> FindPath(Vector2Int start, Vector2Int target)
     {
-        int width = maze[0].Count;
-        int height = maze.Count;
-
         Queue<Vector2Int> queue = new Queue<Vector2Int>();
-        Dictionary<Vector2Int, Vector2Int> parent = new Dictionary<Vector2Int, Vector2Int>();
-        bool[,] visited = new bool[height, width];
-
+        Dictionary<Vector2Int, Vector2Int> cameFrom = new Dictionary<Vector2Int, Vector2Int>();
         queue.Enqueue(start);
-        visited[start.y, start.x] = true;
+        cameFrom[start] = start;
 
-        Vector2Int[] directions = new Vector2Int[]
-        {
-            new Vector2Int(0,1),   // Up
-            new Vector2Int(0,-1),  // Down
-            new Vector2Int(1,0),   // Right
-            new Vector2Int(-1,0)   // Left
-        };
-
-        Debug.Log("Start: " + start + "  end: " + end);
+        int h = maze.Count;
+        int w = maze[0].Count;
 
         while (queue.Count > 0)
         {
-            Vector2Int current = queue.Dequeue();
-            if (current == end) break;
+            var current = queue.Dequeue();
+            if (current == target) break;
 
-            foreach (Vector2Int dir in directions)
+            foreach (var next in GetNeighbors(current))
             {
-                int nx = current.x + dir.x;
-                int ny = current.y + dir.y;
-
-                if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
-                if (visited[ny, nx]) continue;
-                Cell currCell = maze[current.y][current.x];
-                if ((dir.y == 1 && currCell.Borders.Contains(Direction.Up)) ||
-                    (dir.y == -1 && currCell.Borders.Contains(Direction.Down)) ||
-                    (dir.x == 1 && currCell.Borders.Contains(Direction.Right)) ||
-                    (dir.x == -1 && currCell.Borders.Contains(Direction.Left)))
-                    continue;
-
-                queue.Enqueue(new Vector2Int(nx, ny));
-                visited[ny, nx] = true;
-                parent[new Vector2Int(nx, ny)] = current;
+                if (!cameFrom.ContainsKey(next))
+                {
+                    queue.Enqueue(next);
+                    cameFrom[next] = current;
+                }
             }
         }
-        List<Cell> path = new List<Cell>();
-        Vector2Int cur = end;
-        if (start == end)
-        {
-            path.Add(maze[start.y][start.x]);
-            return path;
-        }
+        // reconstruct path
+        List<Vector3> path = new List<Vector3>();
+        if (!cameFrom.ContainsKey(target)) return path;
+
+        var cur = target;
         while (cur != start)
         {
-            if (!parent.ContainsKey(cur))
-            {
-                Debug.Log("Không tìm thấy đường! cur=" + cur);
-                return null; // fallback
-            }
-            path.Add(maze[cur.y][cur.x]);
-            cur = parent[cur];
+            path.Add(maze[cur.y][cur.x].position);
+            cur = cameFrom[cur];
         }
-        path.Add(maze[start.y][start.x]);
+        path.Add(maze[start.y][start.x].position);
         path.Reverse();
 
-        Debug.Log("Countttt: "+ path.Count);
         return path;
+    }
 
+    private List<Vector2Int> GetNeighbors(Vector2Int pos)
+    {
+        List<Vector2Int> result = new List<Vector2Int>();
+        int h = maze.Count;
+        int w = maze[0].Count;
+        Cell cell = maze[pos.y][pos.x];
+
+        // Up
+        if (pos.y > 0 && !cell.Borders.Contains(Direction.Up) && !maze[pos.y - 1][pos.x].Borders.Contains(Direction.Down))
+            result.Add(new Vector2Int(pos.x, pos.y - 1));
+
+        // Down
+        if (pos.y < h - 1 && !cell.Borders.Contains(Direction.Down) && !maze[pos.y + 1][pos.x].Borders.Contains(Direction.Up))
+            result.Add(new Vector2Int(pos.x, pos.y + 1));
+
+        // Left
+        if (pos.x > 0 && !cell.Borders.Contains(Direction.Left) && !maze[pos.y][pos.x - 1].Borders.Contains(Direction.Right))
+            result.Add(new Vector2Int(pos.x - 1, pos.y));
+
+        // Right
+        if (pos.x < w - 1 && !cell.Borders.Contains(Direction.Right) && !maze[pos.y][pos.x + 1].Borders.Contains(Direction.Left))
+            result.Add(new Vector2Int(pos.x + 1, pos.y));
+
+        return result;
     }
 }
